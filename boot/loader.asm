@@ -23,13 +23,13 @@ jmp loader_start
 
     gdt_ptr dw GDT_LIMIT
             dd GDT_BASE
-    loadermsg db '2 loader in real. I'm your father.'
+    loadermsg db '2 loader in real. Im your father.'
 
     loader_start:
     
     mov sp,LOADER_BASE_ADDR
     mov bp,loadermsg
-    mov cx,34
+    mov cx,33
     mov ax,0x1301
     mov bx,0x001f
     mov dx,0x1800
