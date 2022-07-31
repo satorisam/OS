@@ -3,6 +3,10 @@
 LOADER_START_SECTOR equ 0x2
 LOADER_BASE_ADDR equ 0x900
 PAGE_DIR_TABLE_POS equ 0x100000
+KERNEL_START_SECTOR equ 0x9
+KERNEL_BIN_BASE_ADDR equ 0x70000
+KERNEL_ENTRY_POINT equ 0xc0001500
+PT_NULL equ 0
 
 ;-------------------- gdt描述符属性 --------------------------------
 ;我查了查下划线的作用 其实没有任何作用 这里仅仅为了方便 确定哪些位为我们想要设置数而专门用的下划线分割
