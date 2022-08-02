@@ -9,6 +9,9 @@
 #define PIC_M_DATA 0x21
 #define PIC_S_CTRL 0xa0
 #define PIC_S_DATA 0xa1
+#define EFLAGS_IF 0x00000200
+#define GET_EFLAGS(EFLAG_VAR) asm volatile("pushfl; popl %0": "=g"(EFLAG_VAR))
+
 
 
 struct gate_desc{
@@ -97,6 +100,40 @@ static void exception_init(){
     intr_name[17] = "#AC Alignment Check Exception";
     intr_name[18] = "#MC Machine-Check Exception";
     intr_name[19] = "#XF SIMD Floating-Point Exception";
+}
+
+enum intr_status intr_get_status(void){
+    uint32_t eflags = 0;
+    GET_EFLAGS(eflags);
+    return (EFLAGS_IF & eflags) ? INTR_ON : INTR_OFF;
+}
+
+enum intr_status intr_enable(void){
+    enum intr_status old_status;
+    if(INTR_ON == intr_get_status()){
+        old_status = INTR_ON;
+        return old_status;
+    }else{
+        old_status = INTR_ON;
+        asm volatile("sti");
+        return old_status;
+    }
+}
+
+enum intr_status intr_disable(void){
+    enum intr_status old_status;
+    if(INTR_OFF == intr_get_status()){
+        old_status = INTR_OFF;
+        return old_status;
+    }else{
+        old_status = INTR_OFF;
+        asm volatile("cli": : :"memory");
+        return old_status;
+    }
+}
+
+enum intr_status intr_set_status(enum intr_status status){
+    return status & INTR_ON ? intr_enable() : intr_disable();
 }
 
 void idt_init(){
