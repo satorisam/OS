@@ -1,7 +1,11 @@
 {
     "files.associations": {
         "print.h": "c",
-        "debug.h": "c"
+        "debug.h": "c",
+        "string.h": "c",
+        "global.h": "c",
+        "stdbool.h": "c",
+        "memory.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
