@@ -5,7 +5,8 @@
         "string.h": "c",
         "global.h": "c",
         "stdbool.h": "c",
-        "memory.h": "c"
+        "memory.h": "c",
+        "thread.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
