@@ -155,7 +155,7 @@ static void mem_pool_init(uint32_t all_mem){
     kernel_vaddr.vaddr_bitmap.bits = (void*)(MEM_BITMAP_BASE + kbm_length + ubm_length);
     kernel_vaddr.vaddr_start = K_HEAP_START;
     bitmap_init(&kernel_vaddr.vaddr_bitmap);
-    put_str("    mem_pool_init\n");
+    put_str("    mem_pool_init done\n");
 }
 
 void mem_init(){

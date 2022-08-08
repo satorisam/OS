@@ -1,6 +1,7 @@
 #ifndef __THREAD_THREAD_H
 #define __THREAD_THREAD_H
 #include "stdint.h"
+#include "list.h"
 
 typedef void thread_func(void*);
 
@@ -54,9 +55,21 @@ struct task_struct{
     enum task_status status;
     uint8_t priority;
     char name[16];
+    uint8_t ticks;
+
+    uint32_t elapsed_ticks;
+
+    struct list_elem general_tag;
+    struct list_elem all_list_tag;
+
+    uint32_t* pgdir;
     uint32_t stack_magic;
 };
 
+struct task_struct* thread_start(char* name,int prio,thread_func function,void* func_arg);
+
+void thread_init(void);
+void schedule();
 struct task_struct* thread_start(char* name,int prio,thread_func function,void* func_arg);
 
 #endif
