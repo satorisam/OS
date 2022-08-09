@@ -1,6 +1,8 @@
 #ifndef __LIB_STDBOOL_H
 #define __LIB_STDBOOL_H
 
-typedef enum {true=1,false=0} bool;
+#define true 1
+#define false 0
+typedef int bool;
 
 #endif

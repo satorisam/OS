@@ -4,6 +4,7 @@
 #include "interrupt.h"
 #include "memory.h"
 #include "../thread/thread.h"
+#include "console.h"
 
 void k_thread_a(void* arg);
 void k_thread_b(void* arg);
@@ -16,7 +17,7 @@ int main(){
 
     intr_enable();
     while(1){
-        put_str("Main ");
+        console_put_str("Main ");
     }
 
 
@@ -27,13 +28,13 @@ int main(){
 void k_thread_a(void* arg){
     char* para = arg;
     while(1){
-        put_str(para);
+        console_put_str(para);
     }
 }
 
 void k_thread_b(void* arg){
     char* para = arg;
     while(1){
-        put_str(para);
+        console_put_str(para);
     }
 }

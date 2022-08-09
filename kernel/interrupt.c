@@ -130,7 +130,7 @@ enum intr_status intr_enable(void){
         old_status = INTR_ON;
         return old_status;
     }else{
-        old_status = INTR_ON;
+        old_status = INTR_OFF;
         asm volatile("sti");
         return old_status;
     }
@@ -142,14 +142,14 @@ enum intr_status intr_disable(void){
         old_status = INTR_OFF;
         return old_status;
     }else{
-        old_status = INTR_OFF;
+        old_status = INTR_ON;
         asm volatile("cli": : :"memory");
         return old_status;
     }
 }
 
 enum intr_status intr_set_status(enum intr_status status){
-    return status & INTR_ON ? intr_enable() : intr_disable();
+    return status == INTR_ON ? intr_enable() : intr_disable();
 }
 
 void register_handler(uint8_t vector_no,intr_handler function){

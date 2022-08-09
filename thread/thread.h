@@ -10,7 +10,7 @@ enum task_status{
     TASK_READY,
     TASK_BLOCKED,
     TASK_WAITING,
-    TASK_HANDING,
+    TASK_HANGING,
     TASK_DIED
 };
 
@@ -71,5 +71,8 @@ struct task_struct* thread_start(char* name,int prio,thread_func function,void* 
 void thread_init(void);
 void schedule();
 struct task_struct* thread_start(char* name,int prio,thread_func function,void* func_arg);
+struct task_struct* running_thread();
+void thread_block(enum task_status stat);
+void thread_unblock(struct task_struct* pthread);
 
 #endif
