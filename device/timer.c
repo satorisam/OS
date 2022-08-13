@@ -23,7 +23,6 @@ static void intr_timer_handler(void){
     ticks++;
     
     if(cur_thread->ticks == 0){
-        put_str("schedule");
         schedule();
     }else{
         cur_thread->ticks--;
