@@ -23,7 +23,7 @@ int main(){
     init_all();
     
     //process_execute(u_prog_a,"user_prog_a");
-    process_execute(u_prog_b,"user_prog_b");
+    //process_execute(u_prog_b,"user_prog_b");
     thread_start("k_thread_b",31,k_thread_b,"argB ");
     intr_enable();
     
@@ -40,19 +40,77 @@ int main(){
 
 void k_thread_a(void* arg){
     char* para = arg;
-    void* addr = sys_malloc(33);
-    console_put_str(" thread_a:sys_malloc(33)");
-    console_put_int((int)addr);
-    console_put_char('\n');
+    void* addr1;
+    void* addr2;
+    void* addr3;
+    void* addr4;
+    void* addr5;
+    void* addr6;
+    void* addr7;
+
+    console_put_str(" thread_a_start\n");
+    int max = 10;
+    while(max-- > 0){
+        int size = 128;
+        addr1 = sys_malloc(size);
+        size *= 2;
+        addr2 = sys_malloc(size);
+        size *= 2;
+        addr3 = sys_malloc(size);
+        sys_free(addr1);
+        addr4 = sys_malloc(size);
+        size *= 2; size *= 2; size *= 2; size *= 2;
+        size *= 2; size *= 2; size *= 2;
+        addr5 = sys_malloc(size);
+        addr6 = sys_malloc(size);
+        sys_free(addr5);
+        size *= 2;
+        addr7 = sys_malloc(size);
+        sys_free(addr6);
+        sys_free(addr7);
+        sys_free(addr2);
+        sys_free(addr3);
+        sys_free(addr4);
+    }
+    console_put_str(" thread_a end\n");
     while(1);
 }
 
 void k_thread_b(void* arg){
     char* para = arg;
-    void* addr = sys_malloc(63);
-    console_put_str(" thread_b:sys_malloc(63)");
-    console_put_int((int)addr);
-    console_put_char('\n');
+    void* addr1;
+    void* addr2;
+    void* addr3;
+    void* addr4;
+    void* addr5;
+    void* addr6;
+    void* addr7;
+
+    console_put_str(" thread_b_start\n");
+    int max = 10;
+    while(max-- > 0){
+        int size = 128;
+        addr1 = sys_malloc(size);
+        size *= 2;
+        addr2 = sys_malloc(size);
+        size *= 2;
+        addr3 = sys_malloc(size);
+        sys_free(addr1);
+        addr4 = sys_malloc(size);
+        size *= 2; size *= 2; size *= 2; size *= 2;
+        size *= 2; size *= 2; size *= 2;
+        addr5 = sys_malloc(size);
+        addr6 = sys_malloc(size);
+        sys_free(addr5);
+        size *= 2;
+        addr7 = sys_malloc(size);
+        sys_free(addr6);
+        sys_free(addr7);
+        sys_free(addr2);
+        sys_free(addr3);
+        sys_free(addr4);
+    }
+    console_put_str(" thread_b end\n");
     while(1);
 }
 

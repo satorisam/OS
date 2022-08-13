@@ -37,6 +37,7 @@ extern struct pool kernel_pool, user_pool;
 void mem_init(void);
 void block_desc_init(struct mem_block_desc* desc_array);
 void* sys_malloc(uint32_t size);
+void sys_free(void* ptr);
 void* get_kernel_pages(uint32_t pg_cnt);
 void* get_user_pages(uint32_t pg_cnt);
 void* get_a_page(enum pool_flags pf,uint32_t vaddr);
