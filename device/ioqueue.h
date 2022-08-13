@@ -1,7 +1,7 @@
 #ifndef __DEVICE_IOQUEUE_H
 #define __DEVICE_IOQUEUE_H
 #include "stdint.h"
-#include "stdbool.h"
+#include "../lib/stdbool.h"
 #include "thread.h"
 #include "sync.h"
 

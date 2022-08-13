@@ -19,15 +19,15 @@ uint32_t ticks;
 static void intr_timer_handler(void){
     struct task_struct* cur_thread = running_thread();
     ASSERT(cur_thread->stack_magic == 0x20020419);
-
     cur_thread->elapsed_ticks++;
     ticks++;
+    
     if(cur_thread->ticks == 0){
+        put_str("schedule");
         schedule();
     }else{
         cur_thread->ticks--;
     }
-    ASSERT(cur_thread->ticks < 0xfcfcfcfc);
 }
 
 static void frequency_set(uint8_t counter_port, uint8_t counter_no, uint8_t rwl, uint8_t counter_mode, uint16_t counter_value){

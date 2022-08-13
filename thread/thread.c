@@ -7,6 +7,8 @@
 #include "print.h"
 #include "debug.h"
 #include "../lib/kernel/list.h"
+#include "../userprog/process.h"
+#include "tss.h"
 
 #define PG_SIZE 4096
 
@@ -23,7 +25,7 @@ struct task_struct* running_thread(){
     return (struct task_struct*)(esp & 0xfffff000);
 }
 
-static void kernel_thread(thread_func* function,void* func_arg){
+void kernel_thread(thread_func* function,void* func_arg){
     intr_enable();
     function(func_arg);
 }
@@ -98,6 +100,9 @@ void schedule(){
     thread_tag = list_pop(&thread_ready_list);
     struct task_struct* next = elem2entry(struct task_struct,general_tag,thread_tag);
     next->status = TASK_RUNNING;
+    
+    process_activate(next);
+    
     switch_to(cur,next);
 }
 

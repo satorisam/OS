@@ -17,5 +17,6 @@ struct lock{
 
 void lock_acquire(struct lock* plock);
 void lock_release(struct lock* plock);
+void lock_init(struct lock* plock);
 
 #endif

@@ -10,7 +10,11 @@
         "list.h": "c",
         "interrupt.h": "c",
         "stdint.h": "c",
-        "console.h": "c"
+        "console.h": "c",
+        "bitmap.h": "c",
+        "sync.h": "c",
+        "process.h": "c",
+        "tss.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }
