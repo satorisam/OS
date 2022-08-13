@@ -16,7 +16,11 @@
         "process.h": "c",
         "tss.h": "c",
         "syscall.h": "c",
-        "stdio.h": "c"
+        "stdio.h": "c",
+        "stdio-kernel.h": "c",
+        "io.h": "c",
+        "keyboard.h": "c",
+        "ioqueue.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

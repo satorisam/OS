@@ -9,7 +9,6 @@
 extern void intr_exit(void);
 
 void start_process(void* filename_){
-    intr_disable();
     void* function = filename_;
     struct task_struct* cur = running_thread();
     struct intr_stack* proc_stack = (struct intr_stack*)cur->self_kstack + sizeof(struct thread_stack);
