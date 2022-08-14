@@ -118,7 +118,7 @@ $(BUILD_DIR)/file.o: fs/file.c fs/file.h \
 
 $(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \
         device/ide.h fs/fs.h kernel/memory.h lib/string.h kernel/global.h lib/kernel/stdio-kernel.h kernel/debug.h thread/thread.h lib/kernel/list.h kernel/interrupt.h lib/stdbool.h \
-		fs/super_block.h
+		fs/super_block.h fs/file.h fs/fs.h
 	$(CC) $(CFLAGS) $< -o $@
 		
 ##############    汇编代码编译    ###############

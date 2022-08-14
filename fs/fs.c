@@ -407,6 +407,61 @@ int32_t sys_lseek(int32_t fd,int32_t offset,uint8_t whence)
     return file->fd_pos;
 }
 
+//删除普通文件
+int32_t sys_unlink(const char* pathname)
+{
+    ASSERT(strlen(pathname) < MAX_PATH_LEN);
+    
+    struct path_search_record searched_record;
+    memset(&searched_record,0,sizeof(struct path_search_record));
+    int inode_no = search_file(pathname,&searched_record);
+    ASSERT(inode_no != 0);
+    if(inode_no == -1)
+    {
+        printk("file %s not found!\n",pathname);
+        dir_close(searched_record.parent_dir);
+        return -1;
+    }
+    if(searched_record.file_type == FT_DIRECTORY)
+    {
+        printk("cant delete a directory with unlink(),use rmdir() to instead\n");
+        dir_close(searched_record.parent_dir);
+        return -1;
+    }
+    
+    //检查在不在已经打开文件列表
+    uint32_t file_idx  = 0;
+    while(file_idx < MAX_FILE_OPEN)
+    {
+        if(file_table[file_idx].fd_inode != NULL && (uint32_t)inode_no == file_table[file_idx].fd_inode->i_no)
+            break;
+        file_idx++;
+    }
+    if(file_idx < MAX_FILE_OPEN)
+    {
+        dir_close(searched_record.parent_dir);
+        printk("file %s is in use , not allowed to delete!\n",pathname);
+        return -1;
+    }
+    
+    ASSERT(file_idx == MAX_FILE_OPEN);
+    
+    void* io_buf = sys_malloc(1024);
+    if(io_buf == NULL)
+    {
+        dir_close(searched_record.parent_dir);
+        printk("sys_unlink: malloc for io_buf failed!\n");
+        return -1;
+    }
+    
+    struct dir* parent_dir = searched_record.parent_dir;
+    delete_dir_entry(cur_part,parent_dir,inode_no,io_buf);//删除目录项
+    inode_release(cur_part,inode_no);			    //删除inode
+    sys_free(io_buf);
+    dir_close(searched_record.parent_dir);
+    return 0;	//成功删除
+    
+}
 
 
 

@@ -22,52 +22,14 @@ int prog_a_pid = 0,prog_b_pid = 0;
 int main(){
     put_str("I am kernel\n");
     init_all();
-    
-    //process_execute(u_prog_a,"user_prog_a");
-    //process_execute(u_prog_b,"user_prog_b");
-    //thread_start("k_thread_b",31,k_thread_b,"argB ");
-    //thread_start("k_thread_a",31,k_thread_a,"argA ");
-	
-	char buf[64] = {0};
-   uint32_t fd = sys_open("/file1",O_CREAT);
-   sys_close(fd);
-   
-   fd = sys_open("/file1",O_RDWR);
-   printk("open /file1,fd:%d\n",fd);
-   //sys_write(fd,"hello,world\n",12); //新硬盘可以先存数据用 要是之前存过删掉即可
-   //sys_write(fd,"hello,world\n",12);
-   sys_close(fd);
-   
-   fd = sys_open("/file1",O_RDONLY);
-   int read_bytes = sys_read(fd,buf,18);
-   printk("1_ read %d bytes:\n%s\n",read_bytes,buf);
-   
-   memset(buf,0,sizeof(buf));
-   read_bytes = sys_read(fd,buf,7);
-   printk("2_ read %d bytes:\n%s",read_bytes,buf);
-   
-   memset(buf,0,sizeof(buf));
-   read_bytes = sys_read(fd,buf,2);
-   printk("3_ read %d bytes:\n%s",read_bytes,buf);
-   
-   printk("________ SEEK_SET 0 ________\n");
-   
-   sys_lseek(fd,0,SEEK_SET);
-   memset(buf,0,sizeof(buf));
-   read_bytes = sys_read(fd,buf,25);
-   printk("4_ read %d bytes:\n%s",read_bytes,buf);
-   
-   printk("________ SEEK_SET 6 ________\n");
-   sys_lseek(fd,6,SEEK_SET);
-   memset(buf,0,sizeof(buf));
-   read_bytes = sys_read(fd,buf,5);
-   printk("5_ read %d bytes:\n%s\n",read_bytes,buf);
-   
-   printk("________ SEEK_CUR 1________\n");
-   sys_lseek(fd,1,SEEK_CUR);
-   memset(buf,0,sizeof(buf));
-   read_bytes = sys_read(fd,buf,5);
-   printk("6_ read %d bytes:\n%s",read_bytes,buf);
+    intr_enable();
+    char buf[64] = {0};
+    int fd = sys_open("/file1",O_CREAT);
+    sys_close(fd);   
+    fd = sys_open("/file1",O_RDWR);
+    sys_write(fd,"hello,world\n",12);
+    sys_close(fd);
+    printk("/file1 delete %s!\n",sys_unlink("/file1") == 0 ? "done" : "fail");
     while(1);
 }
 
