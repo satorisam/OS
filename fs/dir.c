@@ -327,3 +327,66 @@ bool delete_dir_entry(struct partition* part,struct dir* pdir,uint32_t inode_no,
     }
     return false;
 }
+
+//读取目录
+struct dir_entry* dir_read(struct dir* dir)
+{
+    struct dir_entry* dir_e = (struct dir_entry*)dir->dir_buf; //哈哈 目录项里面自己有缓冲区
+    struct inode* dir_inode = dir->inode;
+    uint32_t all_blocks[140] = {0},block_cnt = 12;
+    uint32_t block_idx = 0,dir_entry_idx = 0;
+    
+    //读取直接块
+    while(block_idx < 12)
+    {
+        all_blocks[block_idx] = dir_inode->i_sectors[block_idx];
+        ++block_idx;
+    }
+    
+    //有间接块 读入
+    if(dir_inode->i_sectors[12] != 0)
+    {
+        ide_read(cur_part->my_disk,dir_inode->i_sectors[12],all_blocks + 12,1);
+        block_cnt = 140;
+    }
+    block_idx = 0;
+    
+    uint32_t cur_dir_entry_pos = 0;		//遍历目录了
+    uint32_t dir_entry_size = cur_part->sb->dir_entry_size;
+    uint32_t dir_entrys_per_sec = SECTOR_SIZE / dir_entry_size;
+    
+    while(dir->dir_pos < dir_inode->i_size)
+    {
+        //该目录中都已经目录项已经遍历完了
+        if(dir->dir_pos >= dir_inode->i_size)	return NULL;
+        if(all_blocks[block_idx] == 0)
+        {
+            block_idx++;
+            continue;
+        }
+        memset(dir_e,0,SECTOR_SIZE);
+        ide_read(cur_part->my_disk,all_blocks[block_idx],dir_e,1);
+        dir_entry_idx = 0;
+        while(dir_entry_idx < dir_entrys_per_sec)
+        {
+            //FT_UNKNOWN是未知
+            if((dir_e + dir_entry_idx)->f_type)
+            {
+                //原来已经遍历过了 因为需要从头开始 
+                if(cur_dir_entry_pos < dir->dir_pos)
+                {
+                    cur_dir_entry_pos += dir_entry_size;
+                    ++dir_entry_idx;
+                    continue;
+                }
+                ASSERT(cur_dir_entry_pos == dir->dir_pos);
+                dir->dir_pos += dir_entry_size;
+                //返回目录地址
+                return dir_e + dir_entry_idx;
+            }
+            ++dir_entry_idx;
+        }
+        ++block_idx;
+    }
+    return NULL;
+}

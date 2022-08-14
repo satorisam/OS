@@ -585,6 +585,56 @@ int32_t sys_mkdir(const char* pathname)
         return -1;
 }
 
+//打开指定目录 返回其目录指针 失败返回NULL
+struct dir* sys_opendir(const char* name)
+{
+    //如果是根目录
+    ASSERT(strlen(name) < MAX_PATH_LEN);
+    if(name[0] == '/' && (name[1] == 0 || name[0] == '.'))
+        return &root_dir;
+        
+    struct path_search_record searched_record;
+    memset(&searched_record,0,sizeof(struct path_search_record));
+    int inode_no = search_file(name,&searched_record);
+    struct dir* ret = NULL;
+    if(inode_no == -1) 
+    {
+        printk("sys_opendir:In %s,sub path %s not exist\n",name,searched_record.searched_path);
+        return NULL;
+    }
+    else
+    {
+        if(searched_record.file_type == FT_REGULAR)
+            printk("%s is regular file!\n",name);
+        else if(searched_record.file_type == FT_DIRECTORY)
+            ret = dir_open(cur_part,inode_no);
+    }    
+    dir_close(searched_record.parent_dir);
+    return ret;
+}
+
+int32_t sys_closedir(struct dir* dir){
+    int32_t ret = -1;
+    if(dir != NULL){
+        dir_close(dir);
+        ret = 0;
+    }
+    return ret;
+}
+
+//包装函数
+struct dir_entry* sys_readdir(struct dir* dir)
+{
+    ASSERT(dir != NULL);
+    return dir_read(dir); //返回读的地址	
+}
+
+//目录指针位置dir_pos置0
+void sys_rewinddir(struct dir* dir)
+{
+    dir->dir_pos = 0;
+}
+
 
 //文件系统初始化 磁盘上搜索 如果没有则格式化分区 并创建文件系统
 void filesys_init(void){
