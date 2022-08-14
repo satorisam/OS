@@ -24,14 +24,13 @@ int main(){
     put_str("I am kernel\n");
     init_all();
     intr_enable();
-    char cwd_buf[32] = {0};
-   sys_getcwd(cwd_buf,32);
-   printf("cwd:%s\n",cwd_buf);
-   sys_mkdir("/dir1/subdir1");
-   printf("%d\n",sys_chdir("/dir1/subdir1"));
-   printf("cwd has changed now is /dir1/subdir1\n");
-   sys_getcwd(cwd_buf,32);
-   printf("cwd:%s\n",cwd_buf);
+    struct stat stat;
+   sys_stat("/",&stat);
+   printk("/'s info \n    i_no:%d\n    size:%d\n    filetype:%d\n",stat.st_ino,stat.st_size,stat.st_filetype);
+   sys_stat("/dir1",&stat);
+   printk("/dir1's info \n    i_no:%d\n    size:%d\n    filetype:%d\n",stat.st_ino,stat.st_size,stat.st_filetype);
+   sys_stat("/dir1/subdir1/file2",&stat);
+   printk("/dir1/subdir1/file2's info \n    i_no:%d\n    size:%d\n    filetype:%d\n",stat.st_ino,stat.st_size,stat.st_filetype);
     while(1);
 }
 
