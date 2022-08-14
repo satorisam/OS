@@ -96,6 +96,7 @@ int32_t file_create(struct dir* parent_dir,char* filename,uint8_t flag){
     
     uint8_t rollback_step = 0;	// 用于回滚资源状态计数
     int32_t inode_no = inode_bitmap_alloc(cur_part);
+
     
     if(inode_no == -1)
     {
@@ -110,6 +111,7 @@ int32_t file_create(struct dir* parent_dir,char* filename,uint8_t flag){
     	rollback_step = 1;
     	goto rollback;
     }
+    
     inode_init(inode_no,new_file_inode);
     
     int fd_idx = get_free_slot_in_global();
@@ -122,9 +124,9 @@ int32_t file_create(struct dir* parent_dir,char* filename,uint8_t flag){
     
     
     file_table[fd_idx].fd_inode = new_file_inode;
-    file_table[fd_idx].fd_inode->write_deny = false;
     file_table[fd_idx].fd_pos   = 0;
     file_table[fd_idx].fd_flag  = flag;
+    file_table[fd_idx].fd_inode->write_deny = false;
     
     struct dir_entry new_dir_entry;
     memset(&new_dir_entry,0,sizeof(struct dir_entry));

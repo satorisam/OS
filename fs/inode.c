@@ -129,8 +129,9 @@ void inode_init(uint32_t inode_no,struct inode* new_inode){
     new_inode->write_deny = false;
     
     uint8_t sec_idx = 0;
-    while(sec_idx < 13)
-    	new_inode->i_sectors[sec_idx] = 0;
+    while(sec_idx < 13){
+        new_inode->i_sectors[sec_idx] = 0;
         sec_idx++;
+    }
 }
 
