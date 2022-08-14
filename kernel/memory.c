@@ -9,8 +9,8 @@
 #include "interrupt.h"
 
 #define PG_SIZE 4096
-#define K_HEAP_START 0xc0100000
-#define MEM_BITMAP_BASE 0xc009a000
+#define K_HEAP_START 0xc0200000
+#define MEM_BITMAP_BASE 0xc019a000
 #define PDE_IDX(addr) ((addr & 0xffc00000)>>22)
 #define PTE_IDX(addr) ((addr & 0x003ff000)>>12)
 

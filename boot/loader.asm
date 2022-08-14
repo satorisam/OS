@@ -171,7 +171,7 @@ jmp loader_start
     sub eax,0x1000
     mov [PAGE_DIR_TABLE_POS + 4092],eax
 
-    mov ecx,256
+    mov ecx,512
     mov esi,0
     mov edx,PG_US_U|PG_RW_W|PG_P
     .create_pte:
