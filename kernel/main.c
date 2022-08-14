@@ -11,6 +11,7 @@
 #include "syscall-init.h"
 #include "syscall.h"
 #include "../lib/stdio.h"
+#include "../fs/fs.h"
 
 void k_thread_a(void* arg);
 void k_thread_b(void* arg);
@@ -25,13 +26,14 @@ int main(){
     process_execute(u_prog_a,"user_prog_a");
     process_execute(u_prog_b,"user_prog_b");
     thread_start("k_thread_b",31,k_thread_b,"argB ");
-    intr_enable();
-    
     thread_start("k_thread_a",31,k_thread_a,"argA ");
+	sys_open("/file1",O_CREAT);
     /*
     while(1){
         console_put_str("Main ");
     }*/
+
+
 
 
     while(1);
