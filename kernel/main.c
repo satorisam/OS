@@ -28,11 +28,40 @@ int main(){
     thread_start("k_thread_b",31,k_thread_b,"argB ");
     thread_start("k_thread_a",31,k_thread_a,"argA ");
 	
-	uint32_t fd = sys_open("/file1",O_RDWR);
-	printf("fd:%d\n",fd);
-	sys_write(fd,"hello World\n",12);
-	sys_close(fd);
-	printf("%d closed now\n",fd);
+	char buf[64] = {0};
+   uint32_t fd = sys_open("/file1",O_CREAT);
+   sys_close(fd);
+   
+   fd = sys_open("/file1",O_RDWR);
+   printk("open /file1,fd:%d\n",fd);
+   //sys_write(fd,"hello,world\n",12); //新硬盘可以先存数据用 要是之前存过删掉即可
+   //sys_write(fd,"hello,world\n",12);
+   sys_close(fd);
+   
+   fd = sys_open("/file1",O_RDONLY);
+   int read_bytes = sys_read(fd,buf,18);
+   printk("1_ read %d bytes:\n%s\n",read_bytes,buf);
+   
+   memset(buf,0,sizeof(buf));
+   read_bytes = sys_read(fd,buf,7);
+   printk("2_ read %d bytes:\n%s\n",read_bytes,buf);
+   
+   memset(buf,0,sizeof(buf));
+   read_bytes = sys_read(fd,buf,2);
+   printk("3_ read %d bytes:\n%s\n",read_bytes,buf);
+   
+   sys_close(fd);
+   printk("________ close file1 and reopen ________\n");
+   
+   memset(buf,0,sizeof(buf));
+   fd = sys_open("/file1",O_RDONLY);
+   read_bytes = sys_read(fd,buf,24);
+   printk("4_ read %d bytes:\n%s\n",read_bytes,buf);
+   
+   memset(buf,0,sizeof(buf));
+   read_bytes = sys_read(fd,buf,1);
+   printk("5_ read %d bytes:\n%s\n",read_bytes,buf);
+   sys_close(fd);
     /*
     while(1){
         console_put_str("Main ");
