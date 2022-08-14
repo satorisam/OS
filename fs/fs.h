@@ -15,16 +15,20 @@ enum file_types{
     FT_DIRECTORY
 };
 
-enum oflags
-{
+enum oflags{
     O_RDONLY,		//只读属性
     O_WRONLY,		//只写属性
     O_RDWR,		//可读写
     O_CREAT = 4	//创建
 };
 
-struct path_search_record
-{
+enum whence{
+    SEEK_SET = 1,
+    SEEK_CUR,
+    SEEK_END
+};
+
+struct path_search_record{
     char searched_path[MAX_PATH_LEN]; //父路径
     struct dir* parent_dir;	       //文件直接的父路径 或者说上一级的路径
     enum file_types file_type;        //普通文件 目录 或者未知类型
@@ -38,5 +42,6 @@ int32_t path_depth_cnt(char* pathname);
 int32_t sys_close(int32_t fd);
 int32_t sys_write(int32_t fd,const void* buf,uint32_t count);
 int32_t sys_read(int32_t fd,void* buf,uint32_t count);
+int32_t sys_lseek(int32_t fd,int32_t offset,uint8_t whence);
 
 #endif

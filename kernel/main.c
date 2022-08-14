@@ -23,10 +23,10 @@ int main(){
     put_str("I am kernel\n");
     init_all();
     
-    process_execute(u_prog_a,"user_prog_a");
-    process_execute(u_prog_b,"user_prog_b");
-    thread_start("k_thread_b",31,k_thread_b,"argB ");
-    thread_start("k_thread_a",31,k_thread_a,"argA ");
+    //process_execute(u_prog_a,"user_prog_a");
+    //process_execute(u_prog_b,"user_prog_b");
+    //thread_start("k_thread_b",31,k_thread_b,"argB ");
+    //thread_start("k_thread_a",31,k_thread_a,"argA ");
 	
 	char buf[64] = {0};
    uint32_t fd = sys_open("/file1",O_CREAT);
@@ -44,73 +44,30 @@ int main(){
    
    memset(buf,0,sizeof(buf));
    read_bytes = sys_read(fd,buf,7);
-   printk("2_ read %d bytes:\n%s\n",read_bytes,buf);
+   printk("2_ read %d bytes:\n%s",read_bytes,buf);
    
    memset(buf,0,sizeof(buf));
    read_bytes = sys_read(fd,buf,2);
-   printk("3_ read %d bytes:\n%s\n",read_bytes,buf);
+   printk("3_ read %d bytes:\n%s",read_bytes,buf);
    
-   sys_close(fd);
-   printk("________ close file1 and reopen ________\n");
+   printk("________ SEEK_SET 0 ________\n");
    
+   sys_lseek(fd,0,SEEK_SET);
    memset(buf,0,sizeof(buf));
-   fd = sys_open("/file1",O_RDONLY);
-   read_bytes = sys_read(fd,buf,24);
-   printk("4_ read %d bytes:\n%s\n",read_bytes,buf);
+   read_bytes = sys_read(fd,buf,25);
+   printk("4_ read %d bytes:\n%s",read_bytes,buf);
    
+   printk("________ SEEK_SET 6 ________\n");
+   sys_lseek(fd,6,SEEK_SET);
    memset(buf,0,sizeof(buf));
-   read_bytes = sys_read(fd,buf,1);
+   read_bytes = sys_read(fd,buf,5);
    printk("5_ read %d bytes:\n%s\n",read_bytes,buf);
-   sys_close(fd);
-    /*
-    while(1){
-        console_put_str("Main ");
-    }*/
-
-
-
-
-    while(1);
-    return 0;
-}
-
-void k_thread_a(void* arg){
-    char* para = arg;
-    void* addr1 = sys_malloc(256);
-	void* addr2 = sys_malloc(255);
-	void* addr3 = sys_malloc(254);
-	console_put_str(" thread_a malloc addr:0x");
-	console_put_int((int)addr1);
-	console_put_char(',');
-	console_put_int((int)addr2);
-	console_put_char(',');
-	console_put_int((int)addr3);
-	console_put_char('\n');
-	int cpu_delay = 10000000;
-	while(cpu_delay-->0);
-	sys_free(addr1);
-	sys_free(addr2);
-	sys_free(addr3);
-    while(1);
-}
-
-void k_thread_b(void* arg){
-    char* para = arg;
-    void* addr1 = sys_malloc(256);
-	void* addr2 = sys_malloc(255);
-	void* addr3 = sys_malloc(254);
-	console_put_str(" thread_b malloc addr:0x");
-	console_put_int((int)addr1);
-	console_put_char(',');
-	console_put_int((int)addr2);
-	console_put_char(',');
-	console_put_int((int)addr3);
-	console_put_char('\n');
-	int cpu_delay = 10000000;
-	while(cpu_delay-->0);
-	sys_free(addr1);
-	sys_free(addr2);
-	sys_free(addr3);
+   
+   printk("________ SEEK_CUR 1________\n");
+   sys_lseek(fd,1,SEEK_CUR);
+   memset(buf,0,sizeof(buf));
+   read_bytes = sys_read(fd,buf,5);
+   printk("6_ read %d bytes:\n%s",read_bytes,buf);
     while(1);
 }
 
@@ -140,7 +97,7 @@ void u_prog_b(void){
     while(1);
 }
 
-/*
+
 void k_thread_a(void* arg){
     while(1){
         if(!ioq_empty(&kbd_buf)){
@@ -160,4 +117,3 @@ void k_thread_b(void* arg){
         }
     }
 }
-*/

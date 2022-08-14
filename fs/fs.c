@@ -375,6 +375,39 @@ int32_t sys_read(int32_t fd,void* buf,uint32_t count)
     return file_read(&file_table[_fd],buf,count);
 }
 
+int32_t sys_lseek(int32_t fd,int32_t offset,uint8_t whence)
+{
+    if(fd < 0)
+    {
+        printk("sys_lseek: fd error\n");
+        return -1;
+    }
+    ASSERT(whence > 0 && whence < 4);
+    uint32_t _fd = fd_local2global(fd);
+    struct file* file = &file_table[_fd];
+    int32_t new_pos = 0;
+    int32_t file_size = (int32_t)file->fd_inode->i_size;
+    
+    switch(whence)
+    {
+        case SEEK_SET:
+            new_pos = offset; //相对文件开始的偏移
+            break;
+        case SEEK_CUR:
+            new_pos = offset + (int32_t)file->fd_pos;
+            break;
+        case SEEK_END:
+            new_pos = offset + (int32_t)file_size;
+            break;    
+    }
+    if(new_pos < 0 || new_pos > (file_size -1))
+    	return -1;
+   
+    file->fd_pos = new_pos;
+    return file->fd_pos;
+}
+
+
 
 
 //文件系统初始化 磁盘上搜索 如果没有则格式化分区 并创建文件系统
