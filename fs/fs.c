@@ -80,7 +80,7 @@ data_start_lba:0x%x\n", \
     
     //处理最后的位 有效位变成0 用~来处理 真的很妙
     uint8_t bit_idx = 0;
-    while(bit_idx <= block_bitmap_last_bit){
+    while(bit_idx < block_bitmap_last_bit){  //修改过
         buf[block_bitmap_last_byte] &= ~(1 << (bit_idx++));	//有效位
     }
     
@@ -122,24 +122,22 @@ data_start_lba:0x%x\n", \
 }
 
 //除了挂载 还需要在内存中把超级块指针 块位图 i结点位图 i结点指针给初始化赋值了 方便使用
-/*
-bool mount_partition(struct list_elem* pelem,int arg)
-{
+
+bool mount_partition(struct list_elem* pelem,int arg){
     char* part_name = (char*)arg;
     struct partition* part = elem2entry(struct partition,part_tag,pelem);//得到分区指针 partition*
-    if(!strcmp(part->name,part_name))					   //字符串相匹配
-    {
+    if(!strcmp(part->name,part_name)){					   //字符串相匹配
     	cur_part = part;						   //赋值指针
     	struct disk* hd = cur_part->my_disk;
     	
     	struct super_block* sb_buf = (struct super_block*)sys_malloc(SECTOR_SIZE);
-    	if(sb_buf == NULL)
+        cur_part->sb = (struct super_block*)sys_malloc(sizeof(struct super_block));
+    	if(cur_part->sb == NULL)
     	    PANIC("alloc memory failed!");
     	
     	memset(sb_buf,0,SECTOR_SIZE);
     	ide_read(hd,cur_part->start_lba + 1,sb_buf,1);
-    	
-    	cur_part->sb = sb_buf;
+    	memcpy(cur_part->sb,sb_buf,sizeof(struct super_block));
     	
     	cur_part->block_bitmap.bits = (uint8_t*)sys_malloc(sb_buf->block_bitmap_sects * SECTOR_SIZE);
     	if(cur_part->block_bitmap.bits == NULL)
@@ -159,7 +157,7 @@ bool mount_partition(struct list_elem* pelem,int arg)
     	
     }
     return false;	//继续循环
-}*/
+}
 
 //文件系统初始化 磁盘上搜索 如果没有则格式化分区 并创建文件系统
 void filesys_init(void){
@@ -206,6 +204,6 @@ void filesys_init(void){
     	++channel_no;		//增加ide通道号
     }
     sys_free(sb_buf);
-    //char default_part[8] = "sdb1";	//参数为int 4字节字符串指针传的进去
-    //list_traversal(&partition_list,mount_partition,(int)default_part);
+    char default_part[8] = "sdb1";	//参数为int 4字节字符串指针传的进去
+    list_traversal(&partition_list,mount_partition,(int)default_part);
 }
