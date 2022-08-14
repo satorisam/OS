@@ -9,6 +9,7 @@
 #include "../userprog/tss.h"
 #include "../userprog/syscall-init.h"
 #include "../device/ide.h"
+#include "../fs/fs.h"
 
 void init_all(){
     put_str("init_all\n");
@@ -21,4 +22,5 @@ void init_all(){
     tss_init();
     syscall_init();
     ide_init();
+    filesys_init();
 }
