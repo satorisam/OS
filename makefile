@@ -113,7 +113,7 @@ $(BUILD_DIR)/dir.o: fs/dir.c fs/dir.h \
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/file.o: fs/file.c fs/file.h \
-        device/ide.h fs/fs.h kernel/memory.h lib/string.h kernel/global.h lib/kernel/stdio-kernel.h kernel/debug.h thread/thread.h fs/super_block.h
+        device/ide.h fs/fs.h kernel/memory.h lib/string.h kernel/global.h lib/kernel/stdio-kernel.h kernel/debug.h thread/thread.h fs/super_block.h kernel/interrupt.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \

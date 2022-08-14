@@ -48,8 +48,8 @@ uint32_t getpid(void){
     return _syscall0(SYS_GETPID);
 }
 
-uint32_t write(char* str){
-    return _syscall1(SYS_WRITE,str);
+uint32_t write(int fd,const void* buf,int count){
+    return _syscall3(SYS_WRITE,fd,buf,count);
 }
 
 void* malloc(uint32_t size){
@@ -59,3 +59,4 @@ void* malloc(uint32_t size){
 void free(void* ptr){
     _syscall1(SYS_FREE,ptr);
 }
+

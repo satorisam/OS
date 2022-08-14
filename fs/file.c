@@ -8,6 +8,7 @@
 #include "global.h"
 #include "debug.h"
 #include "super_block.h"
+#include "interrupt.h"
 
 struct file file_table[MAX_FILE_OPEN];
 
@@ -167,3 +168,266 @@ rollback:
     sys_free(io_buf);
     return -1;
 }
+
+//打开编号为inode_no的文件 成功返回文件描述符 否则返回-1
+int32_t file_open(uint32_t inode_no,uint8_t flag)
+{
+    
+    int fd_idx = get_free_slot_in_global();	//全局描述符表得到idx
+    if(fd_idx == -1)
+    {
+    	printk("exceed max open files\n");
+    	return -1;
+    }
+    file_table[fd_idx].fd_pos = 0;
+    file_table[fd_idx].fd_flag = flag;
+    file_table[fd_idx].fd_inode = inode_open(cur_part,inode_no);
+    		  
+    bool* write_deny = &file_table[fd_idx].fd_inode->write_deny;
+    
+    //可写 或者 可读可写 涉及临界区的情况 记得屏蔽中断
+    if(flag & O_WRONLY || flag & O_RDWR)
+    {
+    	enum intr_status old_status = intr_disable();
+    	if(!(*write_deny))
+    	{
+    	    *write_deny = true;
+    	    intr_set_status(old_status);
+    	}
+    	else
+    	{
+    	    printk("file cant written now try again later!\n");
+    	    intr_set_status(old_status);
+    	    return -1;
+    	}
+    }
+    return pcb_fd_install(fd_idx);
+}
+
+//关闭文件 且使文件描述符恢复可用
+int32_t file_close(struct file* file)
+{
+    if(file == NULL)
+        return -1;
+    file->fd_inode->write_deny = false;
+    inode_close(file->fd_inode);
+    file->fd_inode = NULL;	//检测全局描述符u表是否可用 是看inode是否为NULL 即恢复可用
+    return 0;
+}
+
+//写入文件
+int32_t file_write(struct file* file,const void* buf,uint32_t count)
+{
+    if((file->fd_inode->i_size + count) > (BLOCK_SIZE * 140))	//超过总数字节数 则不分配
+    {
+    	printk("file_write: exceed max file_size 71680 bytes, write file failed\n"); //512 * 140 = 71680
+    	return -1;
+    }
+    
+    uint8_t* io_buf = (uint8_t*)sys_malloc(512);
+    if(io_buf == NULL)
+    {
+    	printk("file_write: sys_malloc for io_buf failed\n");
+    	return -1;
+    }
+    
+    uint32_t* all_blocks = (uint32_t*)sys_malloc(BLOCK_SIZE + 48);	//48是直接块访问 512是间接块访问
+    if(all_blocks == NULL)
+    {
+    	printk("file_write: sys_malloc for all blocks failed\n");
+    	return -1;
+    }
+    
+    const uint8_t* src = buf;						//指向代写入数据
+    uint32_t bytes_written = 0;					//已经写入的数据
+    uint32_t size_left     = count;					//剩下没写的字节
+    int32_t  block_lba     = -1;					//块地址
+    uint32_t block_bitmap_idx = 0;
+    
+    uint32_t sec_idx;							// 索引扇区
+    uint32_t sec_lba;							// 扇区地址
+    uint32_t sec_off_bytes;						// 扇区内字节偏移量
+    uint32_t sec_left_bytes;						// 扇区内剩余字节数
+    uint32_t chunk_size;						// 一次写入硬盘的数据量
+    int32_t  indirect_block_table;					// 一级间接块地址
+    uint32_t block_idx;						// 块索引
+    
+    //看看是否第一次写入数据 是的话先分配一个扇区
+    if(file->fd_inode->i_sectors[0] == 0)
+    {
+    	block_lba = block_bitmap_alloc(cur_part);
+    	if(block_lba == -1)	//分配失败
+    	{
+    	    printk("file_write: block_bitmap_alloc failed\n");
+    	    sys_free(all_blocks);
+    	    sys_free(io_buf);
+    	    return -1;
+    	}
+    	file->fd_inode->i_sectors[0] = block_lba;
+    	
+    	block_bitmap_idx = block_lba - cur_part->sb->data_start_lba;
+    	ASSERT(block_bitmap_idx != 0);
+    	bitmap_sync(cur_part,block_bitmap_idx,BLOCK_BITMAP);
+    }
+    
+    uint32_t file_has_used_blocks = file->fd_inode->i_size / BLOCK_SIZE + 1;	//不满一扇区的也要当一扇区
+    uint32_t file_will_use_blocks = (file->fd_inode->i_size + count) / BLOCK_SIZE + 1;
+    ASSERT(file_will_use_blocks <= 140);
+    
+    uint32_t add_blocks = file_will_use_blocks - file_has_used_blocks;//求增量扇区 为0表示不需要
+    
+    //在原先分配的扇区继续写内容
+    if(add_blocks == 0)
+    {
+    	//原先分配的12个 直接使用的扇区
+    	if(file_has_used_blocks <= 12)
+    	{
+    	    block_idx = file_has_used_blocks - 1;//从最后一个扇区开始
+    	    all_blocks[block_idx] = file->fd_inode->i_sectors[block_idx];
+    	}
+    	else
+    	{
+    	    ASSERT(file->fd_inode->i_sectors[12] != 0);
+    	    indirect_block_table = file->fd_inode->i_sectors[12];
+    	    ide_read(cur_part->my_disk,indirect_block_table,all_blocks + 12,1);//间接块内容读进去了
+    	}
+    }
+    else
+    {
+    	if(file_will_use_blocks <= 12)
+    	{
+    	    block_idx = file_has_used_blocks - 1;		  //继续写最后一块没有写完的空间
+    	    ASSERT(file->fd_inode->i_sectors[block_idx] != 0);
+    	    all_blocks[block_idx] = file->fd_inode->i_sectors[block_idx];
+    	    
+    	    block_idx = file_has_used_blocks;			  //即将要新分配的扇区位置
+    	    while(block_idx < file_will_use_blocks)
+    	    {
+    	    	block_lba = block_bitmap_alloc(cur_part);
+    	    	if(block_lba == -1)
+    	    	{
+    	    	    printk("file_write: block_bitmap_alloc for situation 1 failed\n");
+    	    	    sys_free(all_blocks);
+    	    	    sys_free(io_buf);
+    	    	    return -1;
+    	    	}
+    	        ASSERT(file->fd_inode->i_sectors[block_idx] == 0);
+    	        file->fd_inode->i_sectors[block_idx] = all_blocks[block_idx] = block_lba;
+    	        block_bitmap_idx = block_lba - cur_part->sb->data_start_lba;
+    	        bitmap_sync(cur_part,block_bitmap_idx,BLOCK_BITMAP);
+    	    	++block_idx;
+    	    }
+    	}
+    	else if(file_has_used_blocks <= 12 && file_will_use_blocks > 12) //直接块可能分配完了 要分配间接块了
+    	{
+    	    //把即将要写入的空闲区放到all_block[block_idx]
+    	    block_idx = file_has_used_blocks - 1;
+    	    all_blocks[block_idx] = file->fd_inode->i_sectors[block_idx];
+    	    
+    	    block_lba = block_bitmap_alloc(cur_part);
+    	    if(block_lba == -1)
+    	    {
+    	    	printk("file_write: block_bitmap_alloc for situation 2 failed\n");
+    	    	sys_free(all_blocks);
+    	    	sys_free(io_buf);
+    	    	return -1;
+    	    }
+    	    
+    	    ASSERT(file->fd_inode->i_sectors[12] == 0);
+    	    indirect_block_table = file->fd_inode->i_sectors[12] = block_lba; //先把一级间接表分配了
+    	    
+    	    /*这里书上没有写 但是肯定是必须要有同步的 不然是肯定错误的*/
+    	    block_bitmap_idx = block_lba - cur_part->sb->data_start_lba;
+    	    bitmap_sync(cur_part,block_bitmap_idx,BLOCK_BITMAP);
+    	    
+    	    block_idx = file_has_used_blocks;
+    	    
+    	    while(block_idx < file_will_use_blocks)
+    	    {
+    	    	block_lba = block_bitmap_alloc(cur_part);
+    	    	if(block_lba == -1)
+    	    	{
+    	    	    printk("file_write: block_bitmap_alloc for situation 2 failed\n");
+    	    	    sys_free(all_blocks);
+    	    	    sys_free(io_buf);
+    	    	    return -1;
+    	    	}
+    	    	
+    	    	if(block_idx < 12)
+    	    	{
+    	    	    ASSERT(file->fd_inode->i_sectors[block_lba] == 0);
+    	    	    file->fd_inode->i_sectors[block_lba] = all_blocks[block_idx] = block_lba;
+    	    	}
+    	    	else	all_blocks[block_idx] = block_lba;
+    	    	
+    	    	block_bitmap_idx = block_lba - cur_part->sb->data_start_lba;
+    	    	bitmap_sync(cur_part,block_bitmap_idx,BLOCK_BITMAP);
+    	    	++block_idx;
+    	    }
+    	    ide_write(cur_part->my_disk,indirect_block_table,all_blocks + 12,1);
+    	}
+    	else if(file_has_used_blocks > 12)
+    	{
+    	    ASSERT(file->fd_inode->i_sectors[12] != 0);
+    	    indirect_block_table = file->fd_inode->i_sectors[12];
+    	    
+    	    block_idx = file_has_used_blocks;
+    	    
+    	    while(block_idx < file_will_use_blocks)
+    	    {
+    	        block_lba = block_bitmap_alloc(cur_part);
+    	        if(block_lba == -1)
+    	        {
+    	            printk("file_write: block_bitmap_alloc for situation 3 failed\n");
+    	            sys_free(all_blocks);
+    	    	    sys_free(io_buf);
+    	    	    return -1;
+    	        }
+    	        
+    	        all_blocks[block_idx] = block_lba;
+    	    	
+    	    	block_bitmap_idx = block_lba - cur_part->sb->data_start_lba;
+    	    	bitmap_sync(cur_part,block_bitmap_idx,BLOCK_BITMAP);
+    	    	++block_idx;
+    	    }
+    	    ide_write(cur_part->my_disk,indirect_block_table,all_blocks + 12,1);
+    	}
+    }
+    
+    bool first_write_block = true;              // 有剩余空间块的标识 就表示没处理第一个有空余块的标识
+    file->fd_pos = file->fd_inode->i_size - 1;  // 指针放到文件大小的最后一个
+    while(bytes_written < count)
+    {
+        memset(io_buf,0,BLOCK_SIZE);
+        sec_idx = file->fd_inode->i_size / BLOCK_SIZE; //扇区起始
+        sec_lba = all_blocks[sec_idx];
+        sec_off_bytes  = file->fd_inode->i_size % BLOCK_SIZE; //扇区中的偏移位置
+        sec_left_bytes = BLOCK_SIZE - sec_off_bytes;
+        
+        chunk_size = size_left < sec_left_bytes ? size_left : sec_left_bytes;
+        if(first_write_block)
+        {
+            ide_read(cur_part->my_disk,sec_lba,io_buf,1);
+            first_write_block = false;
+        }
+        memcpy(io_buf + sec_off_bytes,src,chunk_size);
+        ide_write(cur_part->my_disk,sec_lba,io_buf,1);
+        /***************************************/
+        /***************************************/
+        /***************************************/
+        /***************************************/
+        printk("file write ai lba 0x%x\n",sec_lba);
+        src += chunk_size;
+        file->fd_inode->i_size += chunk_size;
+        file->fd_pos += chunk_size;
+        bytes_written += chunk_size;
+        size_left -= chunk_size;
+    }
+    inode_sync(cur_part,file->fd_inode,io_buf);
+    sys_free(all_blocks);
+    sys_free(io_buf);
+    return bytes_written;
+}
+
+
+

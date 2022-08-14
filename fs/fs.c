@@ -304,10 +304,67 @@ int32_t sys_open(const char* pathname,uint8_t flags)
     	    fd = file_create(searched_record.parent_dir,strrchr(pathname,'/') + 1,flags);
     	    dir_close(searched_record.parent_dir);
 			break;
+        default:
+            fd = file_open(inode_no,flags);
     }
     
     return fd;
 }
+
+//局部pcb文件描述符表返回全局表下标号
+static uint32_t fd_local2global(uint32_t local_fd)
+{
+    struct task_struct* cur = running_thread();
+    int32_t global_fd = cur->fd_table[local_fd];
+    ASSERT(global_fd >= 0 && global_fd <= MAX_FILE_OPEN);
+    return (uint32_t)global_fd;
+}
+
+//关闭pcb文件描述符fd的文件 成功返回0 失败-1
+int32_t sys_close(int32_t fd)
+{
+    int32_t ret = -1;	//返回值默认为-1
+    if(fd > 2)		// 0 1都是标准输入 输出
+    {
+    	uint32_t _fd = fd_local2global(fd);
+    	ret = file_close(&file_table[_fd]);
+    	running_thread()->fd_table[fd] = -1;	//pcb fd恢复可用
+    }
+    return ret;
+}
+
+//写入连续的count字节到文件描述符fd
+int32_t sys_write(int32_t fd,const void* buf,uint32_t count)
+{
+    if(fd < 0)
+    {
+        printk("sys_write: fd error\n");
+        return -1;
+    }
+    if(fd == stdout_no)
+    {
+        char tmp_buf[1024] = {0};
+        memcpy(tmp_buf,buf,count);
+        console_put_str(tmp_buf);
+        return count;
+    }
+    
+    uint32_t _fd = fd_local2global(fd);
+    struct file* wr_file = &file_table[_fd];
+    if(wr_file->fd_flag & O_WRONLY || wr_file->fd_flag & O_RDWR)
+    {
+        uint32_t bytes_written = file_write(wr_file,buf,count);
+        return bytes_written;
+    }
+    else
+    {
+        console_put_str("sys_write: not allowed to write file without flag O_RDWR or O_WRONLY\n");
+        return -1;
+    }
+}
+
+
+
 
 //文件系统初始化 磁盘上搜索 如果没有则格式化分区 并创建文件系统
 void filesys_init(void){
