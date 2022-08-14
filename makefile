@@ -89,7 +89,7 @@ $(BUILD_DIR)/syscall.o: lib/user/syscall.c lib/user/syscall.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c userprog/syscall-init.h \
-        thread/thread.h lib/kernel/print.h
+        thread/thread.h lib/kernel/print.h fs/fs.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/stdio.o: lib/stdio.c lib/stdio.h \
