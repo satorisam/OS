@@ -13,6 +13,7 @@
 #include "../lib/stdio.h"
 #include "../fs/fs.h"
 #include "../fs/dir.h"
+#include "../shell/shell.h"
 
 void k_thread_a(void* arg);
 void k_thread_b(void* arg);
@@ -31,10 +32,11 @@ int main(){
 void init(void){
     uint32_t ret_pid = fork();
     if(ret_pid){
-        printf("I am your father, pid:%d , child pid:%d\n",getpid(),ret_pid);
+        while(1);
     }else{
-        printf("I am child, my pid is %d, ret pid is %d\n",getpid(),ret_pid);
+        my_shell();
     }
+    PANIC("init: should not be here");
     while(1);
 }
 

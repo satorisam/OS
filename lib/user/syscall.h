@@ -6,7 +6,10 @@ enum SYSCALL_NR{
     SYS_WRITE,
     SYS_MALLOC,
     SYS_FREE,
-    SYS_FORK
+    SYS_FORK,
+    SYS_READ,
+    SYS_PUTCHAR,
+    SYS_CLEAR
 };
 
 uint32_t getpid(void);

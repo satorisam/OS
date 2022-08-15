@@ -3,7 +3,7 @@ ENTRY_POINT = 0xc0001500
 AS = nasm
 CC = gcc
 LD = ld
-LIB = -I lib/ -I lib/kernel/ -I kernel/ -I device/ -I thread/ -I userprog/ -I /lib/user -I fs/
+LIB = -I lib/ -I lib/kernel/ -I kernel/ -I device/ -I thread/ -I userprog/ -I /lib/user/ -I fs/ -I shell/
 ASFLAGS = -f elf
 CFLAGS = -Wall -m32 -fno-stack-protector $(LIB) -c -fno-builtin -W -Wstrict-prototypes -Wmissing-prototypes
 LDFLAGS =  -m elf_i386 -Ttext $(ENTRY_POINT) -e main -Map $(BUILD_DIR)/kernel.map
@@ -16,11 +16,11 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	  $(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
 	  $(BUILD_DIR)/stdio.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/ide.o \
 	  $(BUILD_DIR)/fs.o $(BUILD_DIR)/dir.o $(BUILD_DIR)/file.o \
-	  $(BUILD_DIR)/inode.o $(BUILD_DIR)/fork.o
+	  $(BUILD_DIR)/inode.o $(BUILD_DIR)/fork.o $(BUILD_DIR)/shell.o
 ##############     c代码编译     ###############
 $(BUILD_DIR)/main.o: kernel/main.c lib/kernel/print.h \
         kernel/init.h kernel/debug.o thread/thread.h kernel/interrupt.h kernel/memory.h device/console.h device/ioqueue.h userprog/process.h \
-		lib/user/syscall.h userprog/syscall-init.h lib/stdio.h fs/dir.h
+		lib/user/syscall.h userprog/syscall-init.h lib/stdio.h fs/dir.h shell/shell.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/init.o: kernel/init.c kernel/init.h lib/kernel/print.h \
@@ -105,7 +105,8 @@ $(BUILD_DIR)/ide.o: device/ide.c device/ide.h \
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/fs.o: fs/fs.c fs/fs.h \
-        lib/stdint.h kernel/global.h device/ide.h fs/inode.h fs/dir.h fs/super_block.h lib/kernel/stdio-kernel.h lib/string.h kernel/debug.h lib/kernel/list.h fs/file.h
+        lib/stdint.h kernel/global.h device/ide.h fs/inode.h fs/dir.h fs/super_block.h lib/kernel/stdio-kernel.h lib/string.h kernel/debug.h lib/kernel/list.h fs/file.h \
+		device/keyboard.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/dir.o: fs/dir.c fs/dir.h \
@@ -124,6 +125,11 @@ $(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \
 $(BUILD_DIR)/fork.o: userprog/fork.c userprog/fork.h \
         kernel/global.h lib/string.h kernel/memory.h kernel/interrupt.h thread/sync.h thread/thread.h kernel/debug.h userprog/process.h lib/kernel/stdio-kernel.h fs/file.h lib/kernel/list.h
 	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/shell.o: shell/shell.c shell/shell.h \
+        kernel/global.h lib/stdint.h lib/string.h lib/user/syscall.h lib/stdio.h fs/file.h kernel/debug.h
+	$(CC) $(CFLAGS) $< -o $@
+
 		
 ##############    汇编代码编译    ###############
 $(BUILD_DIR)/kernel.o: kernel/kernel.asm
