@@ -6,6 +6,7 @@
 #include "stdio.h"
 #include "../fs/file.h"
 #include "../kernel/debug.h"
+#include "buildin_cmd.h"
 
 #define cmd_len    128 //最大支持128个字符
 #define MAX_ARG_NR 16  //命令名外支持15个参数
@@ -111,8 +112,9 @@ void my_shell(void)
     while(1)
     {
         print_prompt();
-        memset(final_path,0,MAX_PATH_LEN);
         memset(cmd_line,0,cmd_len);
+        memset(final_path,0,MAX_PATH_LEN);
+        memset(argv,0,sizeof(char*) * MAX_ARG_NR);
         readline(cmd_line,cmd_len);
         if(cmd_line[0] == 0)
             continue;
@@ -124,14 +126,30 @@ void my_shell(void)
             printf("num of arguments exceed %d\n",MAX_ARG_NR);
             continue;
         }
-        
-        int32_t arg_idx = 0;
-        while(arg_idx < argc)
+        if(!strcmp("ls",argv[0]))
+            buildin_ls(argc,argv);
+        else if(!strcmp("pwd",argv[0]))
+            buildin_pwd(argc,argv);
+        else if(!strcmp("ps",argv[0]))
+            buildin_ps(argc,argv);
+        else if(!strcmp("cd",argv[0]))
         {
-            printf("%s ",argv[arg_idx]);
-            arg_idx++;
+            if(buildin_cd(argc,argv) != NULL)
+            {
+                memset(cwd_cache,0,MAX_PATH_LEN);
+                strcpy(cwd_cache,final_path);
+            }
         }
-        printf("\n");
+        else if(!strcmp("clear",argv[0]))
+            buildin_clear(argc,argv);
+        else if(!strcmp("mkdir",argv[0]))
+            buildin_mkdir(argc,argv);
+        else if(!strcmp("rmdir",argv[0]))
+            buildin_rmdir(argc,argv);   
+        else if(!strcmp("rm",argv[0]))
+            buildin_rm(argc,argv); 
+        else
+            printf("external command\n");
     }
     PANIC("my_shell: should not be here");
 }

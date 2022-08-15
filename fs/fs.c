@@ -162,7 +162,7 @@ bool mount_partition(struct list_elem* pelem,int arg){
     return false;	//继续循环
 }
 
-static char* path_parse(char* pathname,char* name_store){
+char* path_parse(char* pathname,char* name_store){
     if(pathname[0] == '/')
         while(*(++pathname) == '/');	//直到pathname位置不是
 

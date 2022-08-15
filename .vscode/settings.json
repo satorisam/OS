@@ -21,7 +21,8 @@
         "io.h": "c",
         "keyboard.h": "c",
         "ioqueue.h": "c",
-        "fork.h": "c"
+        "fork.h": "c",
+        "shell.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

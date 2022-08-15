@@ -60,5 +60,9 @@ int get_child_dir_name(uint32_t p_inode_nr,uint32_t c_inode_nr,char* path,void* 
 int32_t sys_chdir(const char* path);
 char* sys_getcwd(char* buf,uint32_t size);
 int32_t sys_read(int32_t fd,void* buf,uint32_t count);
+int32_t sys_stat(const char* path,struct stat* buf);
+int32_t sys_rmdir(const char* pathname);
+int32_t sys_closedir(struct dir* dir);
+char* path_parse(char* pathname,char* name_store);
 
 #endif
