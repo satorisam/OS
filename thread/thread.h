@@ -75,6 +75,7 @@ struct task_struct{
     struct mem_block_desc u_block_desc[DESC_CNT];
 
     uint32_t cwd_inode_nr;
+    int16_t  parent_pid;
     uint32_t stack_magic;
 };
 

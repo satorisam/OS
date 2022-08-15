@@ -51,7 +51,7 @@ static void* vaddr_get(enum pool_flags pf,uint32_t pg_cnt){
         }
 
         while(cnt < pg_cnt){
-            bitmap_set(&cur->userprog_vaddr.vaddr_bitmap,bit_idx_start+cnt++,1);
+            bitmap_set(&cur->userprog_vaddr.vaddr_bitmap,bit_idx_start + cnt++,1);
         }
         vaddr_start = cur->userprog_vaddr.vaddr_start + bit_idx_start*PG_SIZE;
         ASSERT((uint32_t)vaddr_start < (0xc0000000 - PG_SIZE));
@@ -168,6 +168,19 @@ void* get_a_page(enum pool_flags pf,uint32_t vaddr){
     return (void*)vaddr;
 }
 
+void* get_a_page_without_opvaddrbitmap(enum pool_flags pf,uint32_t vaddr){
+    struct pool* mem_pool = pf == PF_KERNEL ? &kernel_pool : &user_pool;
+    lock_acquire(&mem_pool->lock);
+    void* page_phyaddr = palloc(mem_pool);
+    if(page_phyaddr == NULL){
+        lock_release(&mem_pool->lock);
+        return NULL;
+    }
+    page_table_add((void*)vaddr,page_phyaddr);
+    lock_release(&mem_pool->lock);
+    return (void*)vaddr;
+}
+
 uint32_t addr_v2p(uint32_t vaddr){
     uint32_t* pte = pte_ptr(vaddr);
     return ((*pte & 0xfffff000) + (vaddr & 0x00000fff));
@@ -176,7 +189,7 @@ uint32_t addr_v2p(uint32_t vaddr){
 static void mem_pool_init(uint32_t all_mem){
     put_str("    mem_pool_init start\n");
     uint32_t page_table_size = PG_SIZE * 256;
-    uint32_t used_mem = page_table_size + 0x100000;
+    uint32_t used_mem = page_table_size + 0x200000;
     uint32_t free_mem = all_mem - used_mem;
     uint16_t all_free_pages = free_mem / PG_SIZE;
     uint16_t kernel_free_pages = all_free_pages / 2;

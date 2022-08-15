@@ -60,3 +60,7 @@ void free(void* ptr){
     _syscall1(SYS_FREE,ptr);
 }
 
+void fork(void){
+    _syscall0(SYS_FORK);
+}
+

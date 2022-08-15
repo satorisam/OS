@@ -10,6 +10,7 @@
 #include "../userprog/process.h"
 #include "tss.h"
 #include "sync.h"
+#include "../kernel/main.h"
 
 #define PG_SIZE 4096
 
@@ -35,6 +36,10 @@ static pid_t allocate_pid(void){
     next_pid++;
     lock_release(&pid_lock);
     return next_pid;
+}
+
+pid_t fork_pid(void){
+    return allocate_pid();
 }
 
 struct task_struct* running_thread(){
@@ -88,6 +93,7 @@ void init_thread(struct task_struct* pthread,char* name,int prio){
         fd_idx++;
     }
     pthread->cwd_inode_nr = 0;
+    pthread->parent_pid = -1;
     pthread->stack_magic = 0x20020419;
 }
 
@@ -175,6 +181,7 @@ void thread_init(void){
     list_init(&thread_ready_list);
     list_init(&thread_all_list);
     lock_init(&pid_lock);
+    process_execute(init,"init");
     make_main_thread();
     idle_thread = thread_start("idle",10,idle,NULL);
     put_str("thread_init done\n");

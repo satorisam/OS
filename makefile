@@ -16,7 +16,7 @@ OBJS = $(BUILD_DIR)/main.o $(BUILD_DIR)/init.o $(BUILD_DIR)/interrupt.o \
 	  $(BUILD_DIR)/process.o $(BUILD_DIR)/syscall.o $(BUILD_DIR)/syscall-init.o \
 	  $(BUILD_DIR)/stdio.o $(BUILD_DIR)/stdio-kernel.o $(BUILD_DIR)/ide.o \
 	  $(BUILD_DIR)/fs.o $(BUILD_DIR)/dir.o $(BUILD_DIR)/file.o \
-	  $(BUILD_DIR)/inode.o
+	  $(BUILD_DIR)/inode.o $(BUILD_DIR)/fork.o
 ##############     c代码编译     ###############
 $(BUILD_DIR)/main.o: kernel/main.c lib/kernel/print.h \
         kernel/init.h kernel/debug.o thread/thread.h kernel/interrupt.h kernel/memory.h device/console.h device/ioqueue.h userprog/process.h \
@@ -54,7 +54,7 @@ $(BUILD_DIR)/memory.o: kernel/memory.c kernel/memory.h \
 
 $(BUILD_DIR)/thread.o: thread/thread.c thread/thread.h \
         lib/stdint.h lib/string.h kernel/memory.h kernel/global.h \
-		kernel/interrupt.h lib/kernel/print.h kernel/debug.h lib/kernel/list.h
+		kernel/interrupt.h lib/kernel/print.h kernel/debug.h lib/kernel/list.h kernel/main.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/list.o: lib/kernel/list.c lib/kernel/list.h \
@@ -89,7 +89,7 @@ $(BUILD_DIR)/syscall.o: lib/user/syscall.c lib/user/syscall.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/syscall-init.o: userprog/syscall-init.c userprog/syscall-init.h \
-        thread/thread.h lib/kernel/print.h fs/fs.h
+        thread/thread.h lib/kernel/print.h fs/fs.h userprog/fork.h
 	$(CC) $(CFLAGS) $< -o $@
 
 $(BUILD_DIR)/stdio.o: lib/stdio.c lib/stdio.h \
@@ -119,6 +119,10 @@ $(BUILD_DIR)/file.o: fs/file.c fs/file.h \
 $(BUILD_DIR)/inode.o: fs/inode.c fs/inode.h \
         device/ide.h fs/fs.h kernel/memory.h lib/string.h kernel/global.h lib/kernel/stdio-kernel.h kernel/debug.h thread/thread.h lib/kernel/list.h kernel/interrupt.h lib/stdbool.h \
 		fs/super_block.h fs/file.h fs/fs.h
+	$(CC) $(CFLAGS) $< -o $@
+
+$(BUILD_DIR)/fork.o: userprog/fork.c userprog/fork.h \
+        kernel/global.h lib/string.h kernel/memory.h kernel/interrupt.h thread/sync.h thread/thread.h kernel/debug.h userprog/process.h lib/kernel/stdio-kernel.h fs/file.h lib/kernel/list.h
 	$(CC) $(CFLAGS) $< -o $@
 		
 ##############    汇编代码编译    ###############

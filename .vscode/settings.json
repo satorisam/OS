@@ -20,7 +20,8 @@
         "stdio-kernel.h": "c",
         "io.h": "c",
         "keyboard.h": "c",
-        "ioqueue.h": "c"
+        "ioqueue.h": "c",
+        "fork.h": "c"
     },
     "C_Cpp.errorSquiggles": "Disabled"
 }

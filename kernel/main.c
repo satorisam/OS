@@ -18,19 +18,23 @@ void k_thread_a(void* arg);
 void k_thread_b(void* arg);
 void u_prog_a(void);
 void u_prog_b(void);
-int prog_a_pid = 0,prog_b_pid = 0;
+
 
 int main(){
     put_str("I am kernel\n");
     init_all();
     intr_enable();
-    struct stat stat;
-   sys_stat("/",&stat);
-   printk("/'s info \n    i_no:%d\n    size:%d\n    filetype:%d\n",stat.st_ino,stat.st_size,stat.st_filetype);
-   sys_stat("/dir1",&stat);
-   printk("/dir1's info \n    i_no:%d\n    size:%d\n    filetype:%d\n",stat.st_ino,stat.st_size,stat.st_filetype);
-   sys_stat("/dir1/subdir1/file2",&stat);
-   printk("/dir1/subdir1/file2's info \n    i_no:%d\n    size:%d\n    filetype:%d\n",stat.st_ino,stat.st_size,stat.st_filetype);
+    //process_execute(u_prog_a,"init");
+    while(1);
+}
+
+void init(void){
+    uint32_t ret_pid = fork();
+    if(ret_pid){
+        printf("I am your father, pid:%d , child pid:%d\n",getpid(),ret_pid);
+    }else{
+        printf("I am child, my pid is %d, ret pid is %d\n",getpid(),ret_pid);
+    }
     while(1);
 }
 
